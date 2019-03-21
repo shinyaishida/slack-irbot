@@ -37,6 +37,7 @@ found 0 vulnerabilities
 
 % ls README*
 README-hubot.md  README.md
+% npm install --save @slack/client
 ```
 
 Go to [Slack App Directory](https://slack.com/apps) and install Hubot. Do not forget to obtain the API token of Hubot.
