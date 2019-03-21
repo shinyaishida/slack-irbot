@@ -1,0 +1,12 @@
+bin
+.editorconfig
+external-scripts.json
+hubot-scripts.json
+node_modules
+package.json
+package-lock.json
+Procfile
+README-hubot.md
+scripts/example.coffee
+.DS_Store*
+.hubot_hibstory
