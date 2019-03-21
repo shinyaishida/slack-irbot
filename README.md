@@ -1,6 +1,6 @@
 # slack-irbot
 
-## Setup
+## Setup irbot
 
 Prepare a Raspberry Pi with Raspbian (tested with Stretch). Upgrade Raspbian packages.
 
@@ -39,3 +39,12 @@ found 0 vulnerabilities
 README-hubot.md  README.md
 ```
 
+Go to [Slack App Directory](https://slack.com/apps) and install Hubot. Do not forget to obtain the API token of Hubot.
+
+## Run irbot
+
+The API token must be passed to hubot via environmental variable `HUBOT_SLACK_TOKEN`. You may export it before running the Hubot launcher script, `bin/hubot`, or inject the export into the script.
+
+```bash
+% bin/hubot -a slack
+```
