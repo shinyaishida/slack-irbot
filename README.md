@@ -49,3 +49,7 @@ The API token must be passed to hubot via environmental variable `HUBOT_SLACK_TO
 ```bash
 % bin/hubot -a slack
 ```
+
+## References
+
+- [hubot-slack](https://github.com/slackapi/hubot-slack/blob/master/docs/_pages/basic_usage.md)
