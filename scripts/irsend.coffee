@@ -5,53 +5,56 @@
 {WebClient} = require "@slack/client"
 childProcess = require 'child_process'
 
-sendIrSignal = (target, command, msg, react) ->
-    childProcess.exec "irsend SEND_ONCE #{target} #{command}", (error, stdout, stderr) ->
-        if error
-            msg.reply "#{error}"
-        else
-            react(msg)
+sendIrSignal = (target, command, msg) ->
+  childProcess.exec "irsend SEND_ONCE #{target} #{command}", (error, stdout, stderr) ->
+    if error
+      msg.reply "#{error}"
 
-sendSignal = (target, command, msg, react) ->
-    if msg.message.thread_ts?
-        sendIrSignal(target, command, msg, react)
+listening = 'What can I do for you?'
+greeting = "Hi there. #{listening}"
 
 module.exports = (robot) ->
-    web = new WebClient robot.adapter.options.token
-    react = (msg, reaction) ->
-        web.reactions.add
-            name: reaction,
-            channel: msg.message.rawMessage.channel,
-            timestamp: msg.message.rawMessage.ts
-    thumbsup = (msg) ->
-        react(msg, 'thumbsup')
-    robot.hear /power/i, (msg) ->
-        sendSignal('aquos', 'power', msg, thumbsup)
-    robot.hear /volup/i, (msg) ->
-        sendSignal('aquos', 'volup', msg, thumbsup)
-    robot.hear /voldown/i, (msg) ->
-        sendSignal('aquos', 'voldown', msg, thumbsup)
-    robot.hear /1/i, (msg) ->
-        sendSignal('aquos', '1', msg, thumbsup)
-    robot.hear /2/i, (msg) ->
-        sendSignal('aquos', '2', msg, thumbsup)
-    robot.hear /3/i, (msg) ->
-        sendSignal('aquos', '3', msg, thumbsup)
-    robot.hear /4/i, (msg) ->
-        sendSignal('aquos', '4', msg, thumbsup)
-    robot.hear /5/i, (msg) ->
-        sendSignal('aquos', '5', msg, thumbsup)
-    robot.hear /6/i, (msg) ->
-        sendSignal('aquos', '6', msg, thumbsup)
-    robot.hear /7/i, (msg) ->
-        sendSignal('aquos', '7', msg, thumbsup)
-    robot.hear /8/i, (msg) ->
-        sendSignal('aquos', '8', msg, thumbsup)
-    robot.hear /9/i, (msg) ->
-        sendSignal('aquos', '9', msg, thumbsup)
-    robot.hear /10/i, (msg) ->
-        sendSignal('aquos', '10', msg, thumbsup)
-    robot.hear /11/i, (msg) ->
-        sendSignal('aquos', '11', msg, thumbsup)
-    robot.hear /12/i, (msg) ->
-        sendSignal('aquos', '12', msg, thumbsup)
+  web = new WebClient robot.adapter.options.token
+  ignoredChannels = [ 'general', 'random' ]
+  channelMap = {}
+
+  robot.hear /(.*)/i, (msg) ->
+    message = msg.message
+    if message.thread_ts?
+      target = channelMap[message.room]
+      sendSignal(target, msg, (m) -> m.message.text)
+    else
+      target = channelMap[message.room]
+      sendSignal(target, msg, (m) -> m.match[1])
+    return
+
+  robot.hearReaction (msg) ->
+    message = msg.message
+    if message.type == 'added' and message.item.type == 'message'
+      target = channelMap[message.room]
+      sendSignal(target, msg, (m) -> m.message.reaction)
+    return
+
+  sendSignal = (target, msg, commander) ->
+    if target?
+      sendSignalToTarget(target, msg, commander)
+    else
+      msg.reply "Sorry but I'm not available on this channel"
+
+  sendSignalToTarget = (target, msg, commander) ->
+    command = commander(msg)
+    if command?
+      sendIrSignal(target, command, msg)
+    else
+      msg.reply "I couldn't catch your order"
+    askNextOrder(msg)
+
+  askNextOrder = (msg) ->
+    msg.send 'What can I do for you?'
+
+  web.channels.list()
+    .then (response) ->
+      for channel in response.channels when channel.name not in ignoredChannels
+        robot.messageRoom channel.id, greeting
+        channelMap[channel.id] = channel.name
+    .catch (error) -> robot.logger.error error.message
